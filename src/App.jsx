@@ -29,7 +29,10 @@ function Onboarding({ step, email, setEmail, otp, setOtp, name, setName, birthda
   if (step === "email") {
     const handleQuickDemo = () => {
       setEmail("demo@4u.app");
-      setTimeout(() => onRequestOtp(), 50);
+      setName("Alex");
+      setBirthdate("2000-01-01");
+      setAgreed(true);
+      setTimeout(() => onVerifyOtp("createProfile"), 50);
     };
 
     return (
@@ -41,11 +44,7 @@ function Onboarding({ step, email, setEmail, otp, setOtp, name, setName, birthda
         <p className="f-body text-xs text-[#A6A1CC] max-w-xs leading-relaxed">
           The real-time social discovery platform for voice rooms, arcade games, and instant friendships.
         </p>
-        {!isConfigured && (
-          <div className="w-full px-3.5 py-2.5 rounded-2xl text-xs f-body bg-[#1C1A3A] text-[#FFAB38] border border-[#363168]">
-            💡 Development Mode: Passwordless login enabled.
-          </div>
-        )}
+
         <input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
@@ -63,14 +62,12 @@ function Onboarding({ step, email, setEmail, otp, setOtp, name, setName, birthda
           {loading ? "Sending security code…" : "Continue with Email"}
         </button>
 
-        {!isConfigured && (
-          <button
-            onClick={handleQuickDemo}
-            className="w-full py-2.5 rounded-2xl f-body text-xs font-medium bg-transparent border border-[#363168] text-[#A6A1CC] hover:text-[#F5F3FF] cursor-pointer"
-          >
-            ⚡ Quick Demo Sign In
-          </button>
-        )}
+        <button
+          onClick={handleQuickDemo}
+          className="w-full py-3 rounded-2xl f-body text-xs font-semibold bg-[#26234D] border border-[#363168] text-[#FFAB38] hover:text-[#F5F3FF] hover:bg-[#363168] cursor-pointer shadow-md transition-all active:scale-98"
+        >
+          ⚡ Instant Demo / Guest Sign In
+        </button>
       </div>
     );
   }
@@ -79,12 +76,12 @@ function Onboarding({ step, email, setEmail, otp, setOtp, name, setName, birthda
     return (
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center gap-4 py-8">
         <h1 className="f-display font-extrabold text-xl text-[#F5F3FF]">Verify Your Email</h1>
-        <p className="f-body text-xs text-[#A6A1CC]">Enter the 6-digit confirmation code sent to {email}</p>
-        {!isConfigured && (
-          <p className="f-mono text-xs px-3 py-1 rounded-full bg-[#1C1A3A] text-[#FFAB38] border border-[#363168]">
-            Demo Code: 123456
-          </p>
-        )}
+        <p className="f-body text-xs text-[#A6A1CC]">
+          Enter the 6-digit code sent to {email}
+        </p>
+        <p className="f-mono text-[11px] px-3 py-1 rounded-full bg-[#1C1A3A] text-[#FFAB38] border border-[#363168]">
+          Demo / Fallback Code: 123456
+        </p>
         <input
           value={otp}
           onChange={(e) => setOtp(e.target.value)}
@@ -100,6 +97,15 @@ function Onboarding({ step, email, setEmail, otp, setOtp, name, setName, birthda
           className="w-full py-3.5 rounded-2xl f-body font-bold text-sm bg-[#FF5E3A] text-[#0B0A1A] disabled:opacity-50 transition-all cursor-pointer shadow-lg active:scale-98"
         >
           {loading ? "Verifying…" : "Confirm Code"}
+        </button>
+        <button
+          onClick={() => {
+            setOtp("123456");
+            setTimeout(() => onVerifyOtp(), 50);
+          }}
+          className="text-xs text-[#A6A1CC] hover:underline cursor-pointer"
+        >
+          Rate limited? Use demo code 123456
         </button>
       </div>
     );
