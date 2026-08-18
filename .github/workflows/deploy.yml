@@ -1,0 +1,76 @@
+name: Build and Deploy to AxenCloud
+
+# Runs on every push to main. Builds the app and uploads dist/ to your
+# AxenCloud hosting via FTP. If you're on a VPS instead, see the
+# commented SSH/rsync alternative at the bottom of this file.
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      # Removes the admin panel from the folder that gets uploaded to your
+      # public host — the admin tool should only ever be run locally or on
+      # a separately secured host (see src/admin/Admin.jsx for why).
+      - name: Strip admin panel from public build
+        run: |
+          rm -f dist/admin.html
+          rm -f dist/assets/admin-*.js
+
+      - name: Deploy to AxenCloud via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.AXENCLOUD_FTP_HOST }}
+          username: ${{ secrets.AXENCLOUD_FTP_USERNAME }}
+          password: ${{ secrets.AXENCLOUD_FTP_PASSWORD }}
+          local-dir: ./dist/
+          server-dir: ${{ secrets.AXENCLOUD_FTP_TARGET_DIR }} # e.g. /public_html/
+
+# ------------------------------------------------------------
+# Required repo secrets (Settings → Secrets and variables → Actions):
+#   VITE_SUPABASE_URL
+#   VITE_SUPABASE_ANON_KEY
+#   AXENCLOUD_FTP_HOST         e.g. ftp.yourdomain.com
+#   AXENCLOUD_FTP_USERNAME
+#   AXENCLOUD_FTP_PASSWORD
+#   AXENCLOUD_FTP_TARGET_DIR   e.g. /public_html/
+# ------------------------------------------------------------
+
+# ------------------------------------------------------------
+# If you're on an AxenCloud VPS instead of shared/cPanel hosting,
+# replace the "Deploy to AxenCloud via FTP" step above with this
+# SSH + rsync version, and add these secrets instead:
+#   AXENCLOUD_SSH_HOST, AXENCLOUD_SSH_USER, AXENCLOUD_SSH_KEY,
+#   AXENCLOUD_DEPLOY_PATH (e.g. /var/www/4u-app/dist)
+#
+#      - name: Deploy via rsync over SSH
+#        uses: burnett01/rsync-deployments@7.0.1
+#        with:
+#          switches: -avzr --delete
+#          path: dist/
+#          remote_path: ${{ secrets.AXENCLOUD_DEPLOY_PATH }}
+#          remote_host: ${{ secrets.AXENCLOUD_SSH_HOST }}
+#          remote_user: ${{ secrets.AXENCLOUD_SSH_USER }}
+#          remote_key: ${{ secrets.AXENCLOUD_SSH_KEY }}
+# ------------------------------------------------------------
